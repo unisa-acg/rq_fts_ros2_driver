@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall)
 add_compile_options(-Wextra)
 add_compile_options(-Wno-unused-parameter)
+add_compile_options(-D_DEFAULT_SOURCE)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
