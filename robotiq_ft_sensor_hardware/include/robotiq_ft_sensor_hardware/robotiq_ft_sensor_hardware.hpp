@@ -44,7 +44,7 @@
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/macros.hpp"
-#include "realtime_tools/realtime_buffer.h"
+#include "realtime_tools/realtime_buffer.hpp"
 #include "robotiq_ft_sensor_interfaces/srv/sensor_accessor.hpp"
 #include "rq_sensor_state.h"
 #include <geometry_msgs/msg/wrench_stamped.hpp>
