@@ -37,9 +37,10 @@
 
 namespace robotiq_ft_sensor_hardware
 {
-hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardware_interface::HardwareInfo& info)
+
+hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardware_interface::HardwareComponentInterfaceParams& params)
 {
-  if (hardware_interface::SensorInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS)
+  if (hardware_interface::SensorInterface::on_init(params) != hardware_interface::CallbackReturn::SUCCESS)
   {
     return CallbackReturn::ERROR;
   }
@@ -222,5 +223,5 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
 
 }  // namespace robotiq_ft_sensor_hardware
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(robotiq_ft_sensor_hardware::RobotiqFTSensorHardware, hardware_interface::SensorInterface)

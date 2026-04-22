@@ -36,20 +36,42 @@
 #ifndef ROBOTIQ_FT_SENSOR__HARDWARE_INTERFACE_HPP_
 #define ROBOTIQ_FT_SENSOR__HARDWARE_INTERFACE_HPP_
 
+// standard libraries
+#include <array>
+#include <limits>
 #include <memory>
+#include <string>
+#include <thread>
+#include <vector>
 
-#include "hardware_interface/handle.hpp"
-#include "hardware_interface/hardware_info.hpp"
-#include "hardware_interface/sensor_interface.hpp"
-#include "hardware_interface/types/hardware_interface_return_values.hpp"
-#include "hardware_interface/types/hardware_interface_type_values.hpp"
-#include "rclcpp/macros.hpp"
-#include "realtime_tools/realtime_buffer.hpp"
-#include "robotiq_ft_sensor_interfaces/srv/sensor_accessor.hpp"
-#include "rq_sensor_state.h"
-#include <geometry_msgs/msg/wrench_stamped.hpp>
-#include <rclcpp/rclcpp.hpp>
+// ros2
+#include <rclcpp/duration.hpp>
+#include <rclcpp/logger.hpp>
+#include <rclcpp/logging.hpp>
+#include <rclcpp/macros.hpp>
+#include <rclcpp/node.hpp>
+#include <rclcpp/service.hpp>
+#include <rclcpp/time.hpp>
+#include <rclcpp/timer.hpp>
+#include <rclcpp/utilities.hpp>
+#include <rclcpp/executors/single_threaded_executor.hpp>
+#include <rclcpp_lifecycle/state.hpp>
+#include <realtime_tools/realtime_buffer.hpp>
+
+// messages
 #include <std_srvs/srv/trigger.hpp>
+
+// ros2-control
+#include <hardware_interface/handle.hpp>
+#include <hardware_interface/hardware_component_interface.hpp>
+#include <hardware_interface/hardware_info.hpp>
+#include <hardware_interface/sensor_interface.hpp>
+#include <hardware_interface/types/hardware_component_interface_params.hpp>
+#include <hardware_interface/types/hardware_interface_return_values.hpp>
+
+// local packages
+#include <robotiq_ft_sensor_interfaces/srv/sensor_accessor.hpp>
+#include "robotiq_ft_sensor_hardware/rq_sensor_state.h"
 
 namespace robotiq_ft_sensor_hardware
 {
@@ -58,7 +80,7 @@ class RobotiqFTSensorHardware : public hardware_interface::SensorInterface
 public:
   RCLCPP_SHARED_PTR_DEFINITIONS(RobotiqFTSensorHardware);
 
-  hardware_interface::CallbackReturn on_init(const hardware_interface::HardwareInfo& info) override;
+  hardware_interface::CallbackReturn on_init(const hardware_interface::HardwareComponentInterfaceParams& params) override;
 
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
@@ -100,8 +122,8 @@ private:
       return;
     }
 
-    strncpy(get_or_set, &buff[0], 3);
-    strncpy(nom_var, &buff[4], strlen(buff) - 3);
+    std::strncpy(get_or_set, &buff[0], 3);
+    std::strncpy(nom_var, &buff[4], strlen(buff) - 3);
 
     if (strstr(get_or_set, "GET"))
     {
@@ -112,7 +134,7 @@ private:
       if (strstr(nom_var, "ZRO"))
       {
         rq_state_do_zero_force_flag();
-        strcpy(ret, "Done");
+        std::strcpy(ret, "Done");
       }
     }
   }

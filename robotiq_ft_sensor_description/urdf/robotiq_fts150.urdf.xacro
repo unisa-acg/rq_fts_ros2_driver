@@ -35,7 +35,7 @@
         </link>
 
         <!-- virtual measurement frame -->
-        <joint name="${tf_prefix}measurment_joint" type="fixed" >
+        <joint name="${tf_prefix}measurement_joint" type="fixed" >
             <origin xyz="0 0 0.01625" rpy="0 0 0" />
             <parent link="${tf_prefix}fts_robotside" />
             <child link="${tf_prefix}robotiq_ft_frame_id" />

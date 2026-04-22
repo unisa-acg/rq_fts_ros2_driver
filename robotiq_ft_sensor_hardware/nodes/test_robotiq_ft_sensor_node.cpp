@@ -33,21 +33,21 @@
  * Copyright (c) 2014, Robotiq, Inc
  */
 
-#include <stdio.h>
-#include <string.h>
-
-#include "rclcpp/rclcpp.hpp"
 #include <chrono>
 #include <exception>
 #include <functional>
 #include <memory>
-
-#include "geometry_msgs/msg/wrench_stamped.hpp"
-#include "robotiq_ft_sensor_hardware/rq_sensor_state.h"
-#include "robotiq_ft_sensor_interfaces/msg/ft_sensor.hpp"
-#include "robotiq_ft_sensor_interfaces/srv/sensor_accessor.hpp"
-#include "std_msgs/msg/string.hpp"
 #include <sstream>
+#include <stdio.h>
+#include <string.h>
+
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/wrench_stamped.hpp>
+#include <std_msgs/msg/string.hpp>
+
+#include <robotiq_ft_sensor_interfaces/msg/ft_sensor.hpp>
+#include <robotiq_ft_sensor_interfaces/srv/sensor_accessor.hpp>
+#include "robotiq_ft_sensor_hardware/rq_sensor_state.h"
 
 /*void receiveCallback(const std_msgs::String::ConstPtr& msg)
 {
@@ -68,7 +68,7 @@ public:
   {
     sc_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     sc_sensor_accessor_ = this->create_client<robotiq_ft_sensor_interfaces::srv::SensorAccessor>(
-        "robotiq_ft_sensor_acc", rmw_qos_profile_services_default, sc_cb_group_);
+        "robotiq_ft_sensor_acc", rclcpp::ServicesQoS(), sc_cb_group_);
 
     rclcpp::SubscriptionOptions sub_options;
     sub_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);

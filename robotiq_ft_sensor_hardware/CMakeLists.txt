@@ -13,11 +13,13 @@ add_compile_options(-D_DEFAULT_SOURCE)
 find_package(ament_cmake REQUIRED)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
+    rclcpp
+    hardware_interface
+    pluginlib
+    std_srvs
     geometry_msgs
-    rclcpp hardware_interface pluginlib
     realtime_tools
     robotiq_ft_sensor_interfaces
-    std_srvs
 )
 
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
