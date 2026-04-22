@@ -80,7 +80,8 @@ class RobotiqFTSensorHardware : public hardware_interface::SensorInterface
 public:
   RCLCPP_SHARED_PTR_DEFINITIONS(RobotiqFTSensorHardware);
 
-  hardware_interface::CallbackReturn on_init(const hardware_interface::HardwareComponentInterfaceParams& params) override;
+  hardware_interface::CallbackReturn
+  on_init(const hardware_interface::HardwareComponentInterfaceParams& params) override;
 
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
@@ -114,24 +115,19 @@ private:
   INT_8 ret_;
   void decode_message_and_do(INT_8 const* const buff, INT_8* const ret)
   {
-    INT_8 get_or_set[3];
-    INT_8 nom_var[4];
-
-    if (buff == NULL || strlen(buff) != 7)
-    {
+    if (buff == nullptr || std::strlen(buff) != 7)
       return;
-    }
 
-    std::strncpy(get_or_set, &buff[0], 3);
-    std::strncpy(nom_var, &buff[4], strlen(buff) - 3);
+    std::string get_or_set(buff, 3);   // first 3 characters
+    std::string nom_var(buff + 4, 4);  // next 4 characters
 
-    if (strstr(get_or_set, "GET"))
+    if (get_or_set == "GET")
     {
-      rq_state_get_command(nom_var, ret);
+      rq_state_get_command(nom_var.c_str(), ret);
     }
-    else if (strstr(get_or_set, "SET"))
+    else if (get_or_set == "SET")
     {
-      if (strstr(nom_var, "ZRO"))
+      if (nom_var == "ZRO")
       {
         rq_state_do_zero_force_flag();
         std::strcpy(ret, "Done");

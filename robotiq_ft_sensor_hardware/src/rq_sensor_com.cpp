@@ -831,8 +831,8 @@ static void rq_com_send_fc_03_request(UINT_16 base, UINT_16 n)
 /**
  * \fn static INT_32 rq_com_wait_for_fc_03_echo(UINT_8 data[])
  * \brief Reads the reply to a fc03 request
- * \param base Address of the buffer that will store the reply
- * \return The number of character read
+ * \param data Address of the buffer that will store the reply
+ * \return The number of character read (bytes of payload), or 0 if incomplete/invalid
  */
 static INT_32 rq_com_wait_for_fc_03_echo(UINT_8* const data)
 {
@@ -843,83 +843,88 @@ static INT_32 rq_com_wait_for_fc_03_echo(UINT_8* const data)
   UINT_8 n = 0;
   UINT_16 CRC = 0;
   INT_32 j = 0;
-  INT_32 ret = rq_com_read_port(&buf[length], MP_BUFF_SIZE - length);
 
-  if (ret != -1)
+  // ** Bounds check: reset if length is invalid **
+  if (length < 0 || length >= MP_BUFF_SIZE)
   {
-    length = length + ret;
+    length = 0;
   }
 
-  // If there is no new data, the buffer is cleared
+  // ** Safely compute bytes to read **
+  INT_32 bytes_to_read = MP_BUFF_SIZE - length;
+  if (bytes_to_read <= 0)
+  {
+    // Buffer full but no valid message – discard and start over
+    length = 0;
+    bytes_to_read = MP_BUFF_SIZE;
+  }
+
+  INT_32 ret = rq_com_read_port(&buf[length], (UINT_32)bytes_to_read);
+  if (ret != -1)
+  {
+    length += ret;
+  }
+
+  // If there is no new data, increment counter; else reset
   if (length == old_length)
   {
-    if (counter_no_new_data < 5)
+    if (++counter_no_new_data >= 5)
     {
-      counter_no_new_data++;
-    }
-    else
-    {
-      length = 0;
+      length = 0;  // Discard stale buffer
     }
   }
   else
   {
     counter_no_new_data = 0;
   }
-
   old_length = length;
 
-  if (length > 0)
+  if (length == 0)
   {
-    // If there is not enough data, return
-    if (length <= 5)
-    {
-      return 0;
-    }
-    else
-    {
-      if (buf[1] == 3)  // 3 indicates the response to a fc03 query
-      {
-        n = buf[2];
-        if (length < 5 + n)
-        {
-          return 0;
-        }
-      }
-      else  // unknown fc code
-      {
-        length = 0;
-        return 0;
-      }
-    }
-    CRC = rq_com_compute_crc(buf, length - 2);
-
-    // Verifies the crc and the slave ID
-    if (CRC != (UINT_16)((buf[length - 1] * 256) + (buf[length - 2])))
-    {
-      // Clears the buffer
-      buf[0] = 0;
-      length = 0;
-      return 0;
-    }
-    else
-    {
-      n = buf[2];
-
-      // Writes the bytes to the return buffer
-      for (j = 0; j < n; j++)
-      {
-        data[j] = buf[j + 3];
-      }
-
-      // Clears the buffer
-      buf[0] = 0;
-      length = 0;
-      return n;
-    }
+    return 0;
   }
 
-  return 0;
+  // Need at least 6 bytes: slave addr (1), function code (1), byte count (1), CRC (2), plus at least 1 data byte
+  if (length < 6)
+  {
+    return 0;
+  }
+
+  // Check function code
+  if (buf[1] != 3)
+  {
+    // Unknown function code – discard buffer
+    length = 0;
+    return 0;
+  }
+
+  n = buf[2];  // Byte count of payload
+  // Total expected length = 1 (addr) + 1 (func) + 1 (byte count) + n (payload) + 2 (CRC) = 5 + n
+  if (length < (5 + n))
+  {
+    return 0;  // Not enough data yet
+  }
+
+  // Compute CRC over the received message (excluding CRC itself)
+  CRC = rq_com_compute_crc(buf, length - 2);
+
+  // Verify CRC and slave ID (assuming slave ID is 9 as used in request)
+  if (CRC != (UINT_16)((buf[length - 1] << 8) | buf[length - 2]))
+  {
+    // Invalid CRC – discard buffer
+    length = 0;
+    return 0;
+  }
+
+  // Valid response: copy payload to output buffer
+  for (j = 0; j < n; j++)
+  {
+    data[j] = buf[j + 3];
+  }
+
+  // Reset buffer for next call
+  length = 0;
+  return n;
 }
 
 /**
@@ -1003,16 +1008,31 @@ static INT_32 rq_com_wait_for_fc_16_echo(void)
   static INT_32 counter_no_new_data = 0;
   UINT_16 CRC = 0;
 
-  length = length + rq_com_read_port(&buf[length], MP_BUFF_SIZE - length);
+  // ** Bounds check: reset if length is invalid **
+  if (length < 0 || length >= MP_BUFF_SIZE)
+  {
+    length = 0;
+  }
+
+  // ** Safely compute bytes to read **
+  INT_32 bytes_to_read = MP_BUFF_SIZE - length;
+  if (bytes_to_read <= 0)
+  {
+    // Buffer full but no valid message – discard and start over
+    length = 0;
+    bytes_to_read = MP_BUFF_SIZE;
+  }
+
+  INT_32 ret = rq_com_read_port(&buf[length], (UINT_32)bytes_to_read);
+  if (ret > 0)
+  {
+    length += ret;
+  }
 
   // Clear the buffer if no new data
   if (length == old_length)
   {
-    if (counter_no_new_data < 5)
-    {
-      counter_no_new_data++;
-    }
-    else
+    if (++counter_no_new_data >= 5)
     {
       length = 0;
     }
@@ -1021,49 +1041,27 @@ static INT_32 rq_com_wait_for_fc_16_echo(void)
   {
     counter_no_new_data = 0;
   }
-
   old_length = length;
 
-  if (length > 0)
+  if (length < 8)
   {
-    // If not enough data, return
-    if (length < 8)
+    return 0;  // Not enough data yet
+  }
+
+  // Check if it's a valid response
+  if (buf[1] == 16)
+  {
+    CRC = rq_com_compute_crc(buf, 6);  // Fixed size for this response
+    UINT_16 received_crc = (UINT_16)((buf[7] << 8) | buf[6]);
+    if (CRC == received_crc)
     {
-      return 0;
-    }
-    else
-    {
-      // if it's a reply to a fc16 query then proceed
-      if (buf[1] == 16)
-      {
-        length = 8;
-
-        CRC = rq_com_compute_crc(buf, length - 2);
-
-        // Check the crc an the slave ID
-        if (CRC != (UINT_16)((buf[length - 1] * 256) + (buf[length - 2])))
-        {
-          // Clear the buffer
-          length = 0;
-
-          return 0;
-        }
-        else
-        {
-          // Clear the buffer
-          length = 0;
-
-          return 1;
-        }
-      }
-      else  // Clear the buffer
-      {
-        length = 0;
-        return 0;
-      }
+      length = 0;  // Reset after success
+      return 1;
     }
   }
 
+  // Invalid message – discard buffer
+  length = 0;
   return 0;
 }
 

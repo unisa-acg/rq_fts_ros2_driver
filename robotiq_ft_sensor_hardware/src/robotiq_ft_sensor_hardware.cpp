@@ -38,7 +38,8 @@
 namespace robotiq_ft_sensor_hardware
 {
 
-hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardware_interface::HardwareComponentInterfaceParams& params)
+hardware_interface::CallbackReturn
+RobotiqFTSensorHardware::on_init(const hardware_interface::HardwareComponentInterfaceParams& params)
 {
   if (hardware_interface::SensorInterface::on_init(params) != hardware_interface::CallbackReturn::SUCCESS)
   {

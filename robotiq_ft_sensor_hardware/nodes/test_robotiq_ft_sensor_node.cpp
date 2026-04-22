@@ -73,9 +73,10 @@ public:
     rclcpp::SubscriptionOptions sub_options;
     sub_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     sub_options.callback_group = sub_cb_group_;
-    sub_ft_sensor_ = this->create_subscription<geometry_msgs::msg::WrenchStamped>(
-        "robotiq_force_torque_sensor_broadcaster/wrench", 10, std::bind(&RQTestSensor::reCallback, this, _1),
-        sub_options);
+    sub_ft_sensor_ =
+        this->create_subscription<geometry_msgs::msg::WrenchStamped>("robotiq_force_torque_sensor_broadcaster/wrench",
+                                                                     10, std::bind(&RQTestSensor::reCallback, this, _1),
+                                                                     sub_options);
     timer_ = this->create_wall_timer(1ms, std::bind(&RQTestSensor::update, this));
     // update();
     return true;
@@ -110,8 +111,8 @@ private:
         }
         RCLCPP_INFO(get_logger(), "service not available, waiting again...");
       }
-      auto result = sc_sensor_accessor_->async_send_request(
-          req, std::bind(&RQTestSensor::response_callback, this, std::placeholders::_1));
+      auto result = sc_sensor_accessor_->async_send_request(req, std::bind(&RQTestSensor::response_callback, this,
+                                                                           std::placeholders::_1));
     }
     count += 1;
     return true;
